@@ -1,0 +1,67 @@
+name: Make Qt
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v2
+      with:
+        version: '5.12.8'
+        host: 'linux'
+        target: 'desktop'
+#        modules: 'qtcharts'
+#        tools: 'tools_qtcreator,qt.tools.qtcreator'
+     
+    - name: Run qmake/make
+      id: make  
+      continue-on-error: true
+      shell: bash
+      run: |
+        label="qmake"
+        echo "##[set-output name=label;]${label}"
+        cd src && qmake && make
+        res=$?
+        if [ $res -eq 0 ]
+        then
+          retour="passing"
+          color="green"
+        else
+          retour="failing"
+          color="red"
+        fi
+        echo "##[set-output name=status;]${retour}"
+        echo "##[set-output name=color;]${color}"
+
+    # switch to badges branch
+    - run: |
+        git checkout badge_qmake || git checkout -b badge_qmake
+        test -d .github/badges || mkdir -p .github/badges
+
+    # create badge
+    - name: badge
+      uses: emibcn/badge-action@v1.2.1
+      with:
+        label: ${{ steps.make.outputs.label }}
+        status: ${{ steps.make.outputs.status || 'failing' }}
+        color: ${{ steps.make.outputs.color || 'red' }}
+        path: '.github/badges/badge_qmake.svg'
+
+    # commit and push badges if badges have changed
+    - name: Commit changes to badge
+      run: |        
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add '.github/badges/badge_qmake.svg'
+        git commit -m "Add/Update badge_qmake" || exit 0
+        git push -f origin badge_qmake

@@ -1,0 +1,14 @@
+{
+  "tests": [
+    {
+      "name": "TestConvertisseur",
+      "setup": "",
+      "run": "cd tests && qmake test-convertisseur.pro && make && ./test-convertisseur.out -platform offscreen",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 10
+    }
+  ]
+}
